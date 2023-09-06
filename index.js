@@ -1,35 +1,41 @@
-// HINTS:
-// 1. Import express and axios
-import express from "express"
-import axios from "axios"
+//To see how the final website should work, run "node solution.js".
+//Make sure you have installed all the dependencies with "npm i".
+//The password is ILoveProgramming
+import express from "express";
+import bodyParser from "body-parser";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// 2. Create an express app and set the port number.
 const app = express();
 const port = 3000;
-const API_URL = "https://secrets-api.appbrewery.com";
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// 3. Use the public folder for static files.
-app.use(express.static("public"));
+var isUserAuthorized = false;
 
-// 4. When the user goes to the home page it should render the index.ejs file.
-app.get('/', async (req, res) => {
-    try {
-      const response = await axios.get(API_URL + "/random");
-      console.log(response.data.secret);
-      res.render("index.ejs", { 
-        secret: JSON.stringify(response.data.secret),
-        username: JSON.stringify(response.data.username)
-     });
-    } catch (error) {
-        console.log(error.response.data);
-        res.status(500);
+function password(req, res, next){
+    const password = req.body["password"];
+    if (password === "ILoveProgramming"){
+        isUserAuthorized = true;
     }
- });
+    next();
+}
 
-// 5. Use axios to get a random secret and pass it to index.ejs to display the
-// secret and the username of the secret.
+app.use(password);
 
-// 6. Listen on your predefined port and start the server.
-app.listen(port, () => {
-    console.log("Server is live on port 3000");
+
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/public/index.html");
 })
+
+app.post("/check", (req, res) => {
+    if (isUserAuthorized){
+        res.sendFile(__dirname + "/public/secret.html");
+    }else{
+        res.sendFile(__dirname + "/public/index.html");
+    }
+})
+
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
+  });
